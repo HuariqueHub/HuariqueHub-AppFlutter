@@ -37,7 +37,8 @@ class HuariqueService {
   }
 
   Future<Huarique> update(int id, Map<String, dynamic> data) async {
-    final response = await _dio.put('/huariques/$id', data: data);
+    // El backend expone PATCH (no PUT) para la actualización parcial.
+    final response = await _dio.patch('/huariques/$id', data: data);
     return Huarique.fromJson(response.data as Map<String, dynamic>);
   }
 

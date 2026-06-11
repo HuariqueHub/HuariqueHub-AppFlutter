@@ -47,6 +47,9 @@ dependencies:
   # Local storage (JWT token)
   shared_preferences: ^2.3.4
 
+  # Abrir apps externas (Google Maps para "Cómo llegar")
+  url_launcher: ^6.3.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

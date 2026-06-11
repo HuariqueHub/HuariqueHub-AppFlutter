@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/models/huarique.dart';
 import '../../data/models/review.dart';
@@ -77,6 +78,41 @@ class _HuariqueDetailScreenState extends State<HuariqueDetailScreen> {
       }
     } finally {
       setState(() => _submittingReview = false);
+    }
+  }
+
+  /// Destino para Google Maps: usa coordenadas exactas si existen; si no,
+  /// arma la dirección de texto (Maps la geolocaliza solo). Devuelve null
+  /// cuando no hay suficiente información para ubicar el local.
+  String? _mapsDestination() {
+    final h = _huarique;
+    if (h == null) return null;
+    if (h.hasLocation) return '${h.latitude},${h.longitude}';
+
+    final address = h.address?.trim() ?? '';
+    if (address.isEmpty) return null;
+
+    final district = h.district.trim();
+    return district.isEmpty ? '$address, Perú' : '$address, $district, Perú';
+  }
+
+  /// Abre Google Maps con la ruta desde la ubicación actual del usuario
+  /// hasta el huarique. No requiere permisos: Maps usa la posición del
+  /// dispositivo como origen al omitir el parámetro de partida.
+  Future<void> _openDirections() async {
+    final destination = _mapsDestination();
+    if (destination == null) return;
+
+    final uri = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(destination)}',
+    );
+
+    final launched =
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo abrir el mapa')),
+      );
     }
   }
 
@@ -208,6 +244,32 @@ class _HuariqueDetailScreenState extends State<HuariqueDetailScreen> {
                                 _huarique!.description!,
                                 style: const TextStyle(
                                     color: kTextSecondary, fontSize: 14),
+                              ),
+                            ],
+                            if (_mapsDestination() != null) ...[
+                              const SizedBox(height: 14),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: _openDirections,
+                                  icon: const Icon(Icons.directions,
+                                      color: kOrangePrimary),
+                                  label: const Text(
+                                    'Cómo llegar',
+                                    style: TextStyle(
+                                        color: kOrangePrimary,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(
+                                        color: kOrangePrimary),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                ),
                               ),
                             ],
                           ],

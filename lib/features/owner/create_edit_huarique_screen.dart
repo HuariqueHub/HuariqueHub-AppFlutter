@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
-import '../../data/models/huarique.dart';
+import '../../data/models/category.dart';
+import '../../data/services/category_service.dart';
 import '../../data/services/huarique_service.dart';
 import '../../providers/auth_provider.dart';
-
-const _categoryOptions = [
-  'Criolla', 'Marina', 'Chifa', 'Fusión', 'Vegana', 'Parrilla', 'Menú', 'Otro'
-];
 
 class CreateEditHuariqueScreen extends StatefulWidget {
   final int? huariqueId;
@@ -22,6 +19,7 @@ class CreateEditHuariqueScreen extends StatefulWidget {
 class _CreateEditHuariqueScreenState
     extends State<CreateEditHuariqueScreen> {
   final _service = HuariqueService();
+  final _categoryService = CategoryService();
   final _formKey = GlobalKey<FormState>();
 
   final _nameCtrl = TextEditingController();
@@ -29,10 +27,12 @@ class _CreateEditHuariqueScreenState
   final _addressCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
-  String _category = 'Criolla';
+
+  List<Category> _categories = [];
+  Category? _selectedCategory;
 
   bool _loading = false;
-  bool _loadingExisting = false;
+  bool _loadingInitial = true;
   String? _error;
 
   bool get _isEditing => widget.huariqueId != null;
@@ -40,7 +40,7 @@ class _CreateEditHuariqueScreenState
   @override
   void initState() {
     super.initState();
-    if (_isEditing) _loadExisting();
+    _init();
   }
 
   @override
@@ -53,31 +53,48 @@ class _CreateEditHuariqueScreenState
     super.dispose();
   }
 
-  Future<void> _loadExisting() async {
-    setState(() => _loadingExisting = true);
+  /// Carga las categorías desde la API y, si estamos editando, el huarique.
+  Future<void> _init() async {
+    setState(() => _loadingInitial = true);
     try {
-      final h = await _service.getById(widget.huariqueId!);
-      _nameCtrl.text = h.name;
-      _districtCtrl.text = h.district;
-      _addressCtrl.text = h.address ?? '';
-      _priceCtrl.text = h.price > 0 ? h.price.toStringAsFixed(0) : '';
-      _descCtrl.text = h.description ?? '';
-      setState(() => _category = h.category);
+      _categories = await _categoryService.getAll();
+      _selectedCategory =
+          _categories.isNotEmpty ? _categories.first : null;
+
+      if (_isEditing) {
+        final h = await _service.getById(widget.huariqueId!);
+        _nameCtrl.text = h.name;
+        _districtCtrl.text = h.district;
+        _addressCtrl.text = h.address ?? '';
+        _priceCtrl.text = h.price > 0 ? h.price.toStringAsFixed(0) : '';
+        _descCtrl.text = h.description ?? '';
+        if (_categories.isNotEmpty) {
+          _selectedCategory = _categories.firstWhere(
+            (c) => c.id == h.categoryId || c.name == h.category,
+            orElse: () => _categories.first,
+          );
+        }
+      }
     } catch (_) {
-      setState(() => _error = 'Error al cargar el huarique.');
+      _error = 'Error al cargar los datos del formulario.';
     } finally {
-      setState(() => _loadingExisting = false);
+      if (mounted) setState(() => _loadingInitial = false);
     }
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedCategory == null) {
+      setState(() => _error = 'Selecciona una categoría.');
+      return;
+    }
     final auth = context.read<AuthProvider>();
     setState(() { _loading = true; _error = null; });
     try {
       final data = {
         'name': _nameCtrl.text.trim(),
-        'category': _category,
+        'category': _selectedCategory!.name,
+        'categoryId': _selectedCategory!.id,
         'district': _districtCtrl.text.trim(),
         'address': _addressCtrl.text.trim(),
         'price': double.tryParse(_priceCtrl.text) ?? 0.0,
@@ -93,7 +110,7 @@ class _CreateEditHuariqueScreenState
     } catch (_) {
       setState(() => _error = 'Error al guardar. Intenta de nuevo.');
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -113,7 +130,7 @@ class _CreateEditHuariqueScreenState
               color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
-      body: _loadingExisting
+      body: _loadingInitial
           ? const Center(
               child: CircularProgressIndicator(color: kOrangePrimary))
           : SingleChildScrollView(
@@ -140,15 +157,17 @@ class _CreateEditHuariqueScreenState
                     // Category
                     _FormField(
                       label: 'Categoría *',
-                      child: DropdownButtonFormField<String>(
-                        value: _category,
-                        items: _categoryOptions
+                      child: DropdownButtonFormField<Category>(
+                        initialValue: _selectedCategory,
+                        items: _categories
                             .map((c) => DropdownMenuItem(
-                                value: c, child: Text(c)))
+                                value: c, child: Text(c.name)))
                             .toList(),
                         onChanged: (v) =>
-                            setState(() => _category = v ?? _category),
+                            setState(() => _selectedCategory = v),
                         decoration: const InputDecoration(),
+                        validator: (v) =>
+                            v == null ? 'Selecciona una categoría' : null,
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -170,7 +189,14 @@ class _CreateEditHuariqueScreenState
                       child: TextFormField(
                         controller: _addressCtrl,
                         decoration: const InputDecoration(
-                            hintText: 'Ej. Jr. Lima 123'),
+                            hintText: 'Ej. Av. La Marina 2355, San Miguel'),
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.only(top: 4),
+                      child: Text(
+                        'Con la dirección, tus clientes podrán abrir la ruta en Google Maps desde el detalle del local.',
+                        style: TextStyle(fontSize: 11, color: kTextTertiary),
                       ),
                     ),
                     const SizedBox(height: 14),
