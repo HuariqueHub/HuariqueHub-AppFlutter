@@ -2,13 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
-import '../../data/models/huarique.dart';
 import '../../data/services/huarique_service.dart';
 import '../../providers/auth_provider.dart';
 
-const _categoryOptions = [
-  'Criolla', 'Marina', 'Chifa', 'Fusión', 'Vegana', 'Parrilla', 'Menú', 'Otro'
-];
+// Mapa de respaldo nombre → id (coincide con las categorías sembradas en el
+// backend) por si la carga desde el API falla. El backend exige `categoryId`.
+const Map<String, int> _fallbackCategories = {
+  'Pollo': 1,
+  'Marina': 2,
+  'Criolla': 3,
+  'Chifa': 4,
+  'Postres': 5,
+  'Menú': 6,
+  'Café': 7,
+  'Parrillas': 8,
+};
 
 class CreateEditHuariqueScreen extends StatefulWidget {
   final int? huariqueId;
@@ -29,6 +37,10 @@ class _CreateEditHuariqueScreenState
   final _addressCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
+
+  // Categorías reales (nombre → id). Se inicializa con el respaldo y se
+  // reemplaza con las categorías cargadas desde el backend.
+  Map<String, int> _categoryIds = Map.of(_fallbackCategories);
   String _category = 'Criolla';
 
   bool _loading = false;
@@ -40,7 +52,24 @@ class _CreateEditHuariqueScreenState
   @override
   void initState() {
     super.initState();
+    _loadCategories();
     if (_isEditing) _loadExisting();
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final cats = await _service.getCategories();
+      if (cats.isNotEmpty && mounted) {
+        setState(() {
+          _categoryIds = cats;
+          if (!_categoryIds.containsKey(_category)) {
+            _category = _categoryIds.keys.first;
+          }
+        });
+      }
+    } catch (_) {
+      // Se mantiene el mapa de respaldo si falla la carga.
+    }
   }
 
   @override
@@ -62,7 +91,14 @@ class _CreateEditHuariqueScreenState
       _addressCtrl.text = h.address ?? '';
       _priceCtrl.text = h.price > 0 ? h.price.toStringAsFixed(0) : '';
       _descCtrl.text = h.description ?? '';
-      setState(() => _category = h.category);
+      setState(() {
+        // Si la categoría del huarique no está en la lista, la agregamos para
+        // que el dropdown pueda mostrarla sin romper.
+        if (h.category.isNotEmpty && !_categoryIds.containsKey(h.category)) {
+          _categoryIds = {..._categoryIds, h.category: 0};
+        }
+        _category = h.category.isNotEmpty ? h.category : _category;
+      });
     } catch (_) {
       setState(() => _error = 'Error al cargar el huarique.');
     } finally {
@@ -78,6 +114,7 @@ class _CreateEditHuariqueScreenState
       final data = {
         'name': _nameCtrl.text.trim(),
         'category': _category,
+        'categoryId': _categoryIds[_category] ?? _fallbackCategories[_category] ?? 0,
         'district': _districtCtrl.text.trim(),
         'address': _addressCtrl.text.trim(),
         'price': double.tryParse(_priceCtrl.text) ?? 0.0,
@@ -141,8 +178,10 @@ class _CreateEditHuariqueScreenState
                     _FormField(
                       label: 'Categoría *',
                       child: DropdownButtonFormField<String>(
-                        value: _category,
-                        items: _categoryOptions
+                        value: _categoryIds.containsKey(_category)
+                            ? _category
+                            : _categoryIds.keys.first,
+                        items: _categoryIds.keys
                             .map((c) => DropdownMenuItem(
                                 value: c, child: Text(c)))
                             .toList(),

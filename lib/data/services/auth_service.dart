@@ -26,13 +26,15 @@ class AuthService {
     required String password,
     required String role,
   }) async {
-    final response = await _dio.post('/users', data: {
+    await _dio.post('/users', data: {
       'name': name,
       'email': email,
       'password': password,
       'role': role,
     });
-    return AppUser.fromJson(response.data as Map<String, dynamic>);
+    // POST /users no devuelve token; iniciamos sesión automáticamente para
+    // obtener y persistir el JWT y así habilitar las llamadas autenticadas.
+    return login(email, password);
   }
 
   Future<List<AppUser>> getUsers() async {

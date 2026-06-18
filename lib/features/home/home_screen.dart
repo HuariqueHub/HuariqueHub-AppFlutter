@@ -6,8 +6,6 @@ import '../../data/models/huarique.dart';
 import '../../data/services/huarique_service.dart';
 import '../../providers/auth_provider.dart';
 
-const _categories = ['Todos', 'Criolla', 'Marina', 'Chifa', 'Fusión', 'Vegana'];
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -24,6 +22,14 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Huarique> _filtered = [];
   bool _loading = true;
   String? _error;
+
+  // Las categorías se derivan de los datos reales cargados desde el backend,
+  // de modo que cada chip siempre corresponde a huariques existentes.
+  List<String> get _categories {
+    final cats = _huariques.map((h) => h.category).where((c) => c.isNotEmpty).toSet().toList()
+      ..sort();
+    return ['Todos', ...cats];
+  }
 
   @override
   void initState() {
