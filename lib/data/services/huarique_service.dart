@@ -37,25 +37,13 @@ class HuariqueService {
   }
 
   Future<Huarique> update(int id, Map<String, dynamic> data) async {
-    // El backend expone PATCH /huariques/{id} (actualización parcial), no PUT.
+    // El backend expone PATCH (no PUT) para la actualización parcial.
     final response = await _dio.patch('/huariques/$id', data: data);
     return Huarique.fromJson(response.data as Map<String, dynamic>);
   }
 
   Future<void> delete(int id) async {
     await _dio.delete('/huariques/$id');
-  }
-
-  // ── Categorías ─────────────────────────────────────────────────────────────
-  /// Devuelve las categorías disponibles como mapa nombre → id.
-  /// El backend exige `categoryId` (int) al crear/editar un huarique.
-  Future<Map<String, int>> getCategories() async {
-    final response = await _dio.get('/categories');
-    final list = response.data as List<dynamic>;
-    return {
-      for (final e in list)
-        (e as Map<String, dynamic>)['name'] as String: e['id'] as int,
-    };
   }
 
   // ── Reviews ──────────────────────────────────────────────────────────────
