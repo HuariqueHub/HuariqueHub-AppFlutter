@@ -22,6 +22,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   bool _loading = true;
   String? _selectedPlanId;
   bool _subscribing = false;
+  bool _loadingReceipt = false;
 
   @override
   void initState() {
@@ -123,6 +124,61 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     }
   }
 
+  /// Descarga y muestra el comprobante de la suscripción activa (US25).
+  Future<void> _showReceipt() async {
+    if (_activeSub == null) return;
+    setState(() => _loadingReceipt = true);
+    try {
+      final r = await _service.getReceipt(_activeSub!.id);
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Comprobante de pago'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _receiptRow('N° comprobante', '${r['receiptNumber'] ?? ''}'),
+              _receiptRow('Plan', '${r['planName'] ?? ''}'),
+              _receiptRow('Monto',
+                  '${r['currency'] ?? 'PEN'} ${(r['amount'] as num?)?.toStringAsFixed(2) ?? '0.00'}'),
+              _receiptRow('Estado', '${r['status'] ?? ''}'),
+              _receiptRow('Emitido',
+                  (r['issuedAt'] as String?)?.split('T').first ?? ''),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cerrar'),
+            ),
+          ],
+        ),
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo obtener el comprobante')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loadingReceipt = false);
+    }
+  }
+
+  Widget _receiptRow(String label, String value) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: const TextStyle(color: kTextSecondary, fontSize: 13)),
+            Text(value,
+                style: const TextStyle(
+                    color: kBrownDark, fontWeight: FontWeight.w600, fontSize: 13)),
+          ],
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     final isSamePlan = _activeSub?.planId == _selectedPlanId;
@@ -210,7 +266,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 6),
                           decoration: BoxDecoration(
-                            color: kOrangePrimary.withOpacity(0.2),
+                            color: kOrangePrimary.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Text(
@@ -222,6 +278,27 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+
+                // Descargar comprobante de pago (US25)
+                if (_activeSub != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    child: OutlinedButton.icon(
+                      onPressed: _loadingReceipt ? null : _showReceipt,
+                      icon: const Icon(Icons.receipt_long, color: kOrangePrimary),
+                      label: Text(
+                        _loadingReceipt
+                            ? 'Generando comprobante...'
+                            : 'Descargar comprobante',
+                        style: const TextStyle(
+                            color: kOrangePrimary, fontWeight: FontWeight.w600),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: kOrangePrimary),
+                        minimumSize: const Size.fromHeight(46),
+                      ),
                     ),
                   ),
 
@@ -334,13 +411,13 @@ class _PlanCard extends StatelessWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                      color: kOrangePrimary.withOpacity(0.15),
+                      color: kOrangePrimary.withValues(alpha: 0.15),
                       blurRadius: 8,
                       offset: const Offset(0, 2))
                 ]
               : [
                   BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 4,
                       offset: const Offset(0, 1))
                 ],

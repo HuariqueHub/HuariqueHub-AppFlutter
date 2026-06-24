@@ -37,6 +37,20 @@ class AuthService {
     return login(email, password);
   }
 
+  /// Inicia la recuperación de contraseña (US16). Devuelve el mensaje del backend.
+  Future<String> forgotPassword(String email) async {
+    final response =
+        await _dio.post('/auth/forgot-password', data: {'email': email});
+    return (response.data as Map<String, dynamic>)['message'] as String? ?? '';
+  }
+
+  /// Restablece la contraseña (US16).
+  Future<String> resetPassword(String email, String newPassword) async {
+    final response = await _dio.post('/auth/reset-password',
+        data: {'email': email, 'newPassword': newPassword});
+    return (response.data as Map<String, dynamic>)['message'] as String? ?? '';
+  }
+
   Future<List<AppUser>> getUsers() async {
     final response = await _dio.get('/users');
     final list = response.data as List<dynamic>;

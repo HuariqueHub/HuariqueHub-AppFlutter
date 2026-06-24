@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +7,8 @@ import '../../core/theme/app_colors.dart';
 import '../../data/models/huarique.dart';
 import '../../data/models/review.dart';
 import '../../data/services/huarique_service.dart';
+import '../../data/services/favorite_service.dart';
+import '../../data/services/report_service.dart';
 import '../../providers/auth_provider.dart';
 
 class HuariqueDetailScreen extends StatefulWidget {
@@ -18,11 +21,14 @@ class HuariqueDetailScreen extends StatefulWidget {
 
 class _HuariqueDetailScreenState extends State<HuariqueDetailScreen> {
   final _service = HuariqueService();
+  final _favoriteService = FavoriteService();
+  final _reportService = ReportService();
   final _reviewCtrl = TextEditingController();
 
   Huarique? _huarique;
   List<Review> _reviews = [];
   bool _loading = true;
+  bool _isFavorite = false;
   int _myRating = 5;
   bool _submittingReview = false;
 
@@ -52,6 +58,35 @@ class _HuariqueDetailScreenState extends State<HuariqueDetailScreen> {
     } finally {
       setState(() => _loading = false);
     }
+    await _loadFavorite();
+  }
+
+  Future<void> _loadFavorite() async {
+    final userId = context.read<AuthProvider>().user?.id;
+    if (userId == null) return;
+    try {
+      final ids = await _favoriteService.getFavoriteIds(userId);
+      if (mounted) setState(() => _isFavorite = ids.contains(widget.huariqueId));
+    } catch (_) {
+      // sin favoritos: no bloqueante
+    }
+  }
+
+  /// Marca/desmarca como favorito (US03), optimista con reversión ante error.
+  Future<void> _toggleFavorite() async {
+    final userId = context.read<AuthProvider>().user?.id;
+    if (userId == null) return;
+    final wasFavorite = _isFavorite;
+    setState(() => _isFavorite = !wasFavorite);
+    try {
+      if (wasFavorite) {
+        await _favoriteService.remove(userId, widget.huariqueId);
+      } else {
+        await _favoriteService.add(userId, widget.huariqueId);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isFavorite = wasFavorite);
+    }
   }
 
   Future<void> _submitReview() async {
@@ -70,15 +105,78 @@ class _HuariqueDetailScreenState extends State<HuariqueDetailScreen> {
         _reviewCtrl.clear();
         _myRating = 5;
       });
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
+        // Surface el mensaje de moderación del backend cuando aplica (US08).
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al enviar la reseña')),
+          SnackBar(content: Text(_serverMessage(e) ?? 'Error al enviar la reseña')),
         );
       }
     } finally {
       setState(() => _submittingReview = false);
     }
+  }
+
+  /// Extrae el campo "message" del cuerpo de error del backend (ErrorResource).
+  String? _serverMessage(Object e) {
+    if (e is DioException) {
+      final data = e.response?.data;
+      if (data is Map && data['message'] is String) return data['message'] as String;
+    }
+    return null;
+  }
+
+  /// Reporta información incorrecta del huarique (US21).
+  Future<void> _submitReport(String reason) async {
+    final userId = context.read<AuthProvider>().user?.id;
+    if (userId == null) return;
+    try {
+      await _reportService.createReport(widget.huariqueId, userId, reason);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gracias, registramos tu reporte para revisión.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_serverMessage(e) ?? 'No se pudo enviar el reporte')),
+        );
+      }
+    }
+  }
+
+  void _showReportDialog() {
+    final reasonCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Reportar información'),
+        content: TextField(
+          controller: reasonCtrl,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            hintText: '¿Qué dato está incorrecto?',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final reason = reasonCtrl.text.trim();
+              if (reason.isEmpty) return;
+              Navigator.of(dialogCtx).pop();
+              _submitReport(reason);
+            },
+            child: const Text('Enviar reporte'),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Destino para Google Maps: usa coordenadas exactas si existen; si no,
@@ -130,6 +228,19 @@ class _HuariqueDetailScreenState extends State<HuariqueDetailScreen> {
           _huarique?.name ?? 'Detalle',
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
+        actions: [
+          if (_huarique != null)
+            IconButton(
+              icon: Icon(
+                _isFavorite ? Icons.favorite : Icons.favorite_border,
+                color: _isFavorite ? Colors.red : Colors.white,
+              ),
+              tooltip: _isFavorite
+                  ? 'Quitar de favoritos'
+                  : 'Agregar a favoritos',
+              onPressed: _toggleFavorite,
+            ),
+        ],
       ),
       body: _loading
           ? const Center(
@@ -204,6 +315,49 @@ class _HuariqueDetailScreenState extends State<HuariqueDetailScreen> {
                                 ),
                               ],
                             ),
+                            if (_huarique!.openStatus != OpenStatus.unknown) ...[
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: _huarique!.openStatus ==
+                                              OpenStatus.open
+                                          ? Colors.green.shade600
+                                          : kTextTertiary,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.schedule,
+                                            size: 14, color: Colors.white),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          _huarique!.openStatus.label,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (_huarique!.openAt != null &&
+                                      _huarique!.closeAt != null) ...[
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '${_huarique!.openAt} - ${_huarique!.closeAt}',
+                                      style: const TextStyle(
+                                          color: kTextSecondary, fontSize: 12),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ],
                             if (_huarique!.price > 0) ...[
                               const SizedBox(height: 12),
                               const Divider(color: kDividerWarm),
@@ -272,6 +426,18 @@ class _HuariqueDetailScreenState extends State<HuariqueDetailScreen> {
                                 ),
                               ),
                             ],
+                            // Reportar información incorrecta (US21)
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton.icon(
+                                onPressed: _showReportDialog,
+                                icon: const Icon(Icons.flag_outlined,
+                                    size: 16, color: kTextSecondary),
+                                label: const Text('Reportar información',
+                                    style: TextStyle(
+                                        fontSize: 12, color: kTextSecondary)),
+                              ),
+                            ),
                           ],
                         ),
                       ),

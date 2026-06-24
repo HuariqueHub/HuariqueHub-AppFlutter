@@ -127,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: kErrorRed.withOpacity(0.1),
+                      color: kErrorRed.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -150,7 +150,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         )
                       : const Text('Ingresar'),
                 ),
-                const SizedBox(height: 20),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => context.push('/forgot-password'),
+                    child: const Text('¿Olvidaste tu contraseña?',
+                        style: TextStyle(color: kOrangePrimary, fontSize: 13)),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

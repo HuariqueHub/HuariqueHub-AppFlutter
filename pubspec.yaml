@@ -50,6 +50,10 @@ dependencies:
   # Abrir apps externas (Google Maps para "Cómo llegar")
   url_launcher: ^6.3.1
 
+  # Mapa in-app con marcadores (US02) usando tiles de OpenStreetMap (sin API key)
+  flutter_map: ^8.1.1
+  latlong2: ^0.9.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

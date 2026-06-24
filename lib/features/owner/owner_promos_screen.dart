@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/models/promo.dart';
 import '../../data/services/promo_service.dart';
-import '../../providers/auth_provider.dart';
 
 const Map<String, String> _typeEmoji = {
   '2x1': '🍗',
@@ -132,7 +130,7 @@ class _OwnerPromosScreenState extends State<OwnerPromosScreen> {
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: _promos.length,
-                  separatorBuilder: (_, __) =>
+                  separatorBuilder: (_, _) =>
                       const SizedBox(height: 10),
                   itemBuilder: (_, i) => _PromoCard(
                     promo: _promos[i],
@@ -198,7 +196,7 @@ class _PromoCard extends StatelessWidget {
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: promo.isActive
-                              ? kOrangePrimary.withOpacity(0.15)
+                              ? kOrangePrimary.withValues(alpha: 0.15)
                               : kDividerWarm,
                           borderRadius: BorderRadius.circular(6),
                         ),

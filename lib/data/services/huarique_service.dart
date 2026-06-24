@@ -6,20 +6,41 @@ import '../../core/network/api_client.dart';
 class HuariqueService {
   final Dio _dio = ApiClient.instance;
 
-  Future<List<Huarique>> getAll({String? category, String? district}) async {
+  Future<List<Huarique>> getAll({bool near = false}) async {
     final params = <String, dynamic>{};
-    if (category != null && category != 'Todos') params['category'] = category;
-    if (district != null) params['district'] = district;
-    final response = await _dio.get('/huariques', queryParameters: params);
-    final list = response.data as List<dynamic>;
-    return list
-        .map((e) => Huarique.fromJson(e as Map<String, dynamic>))
-        .toList();
+    // El backend solo filtra por q/near/ownerId; el resto se filtra en cliente.
+    if (near) params['near'] = true;
+    try {
+      final response = await _dio.get('/huariques', queryParameters: params);
+      final list = response.data as List<dynamic>;
+      return list
+          .map((e) => Huarique.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      // El backend responde 404 cuando un filtro no arroja resultados (US19).
+      if (e.response?.statusCode == 404) return [];
+      rethrow;
+    }
   }
 
   Future<Huarique> getById(int id) async {
     final response = await _dio.get('/huariques/$id');
     return Huarique.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// Sugerencias personalizadas para el usuario (US18).
+  Future<List<Huarique>> getSuggestions(int userId) async {
+    try {
+      final response = await _dio
+          .get('/huariques/suggestions', queryParameters: {'userId': userId});
+      final list = response.data as List<dynamic>;
+      return list
+          .map((e) => Huarique.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return [];
+      rethrow;
+    }
   }
 
   Future<List<Huarique>> getByOwner(int ownerId) async {

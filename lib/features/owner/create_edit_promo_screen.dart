@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
-import '../../data/models/promo.dart';
 import '../../data/services/promo_service.dart';
 
 class _PromoType {
@@ -162,7 +161,7 @@ class _CreateEditPromoScreenState extends State<CreateEditPromoScreen> {
                     _FormField(
                       label: 'Tipo de promo *',
                       child: DropdownButtonFormField<String>(
-                        value: _typeKey,
+                        initialValue: _typeKey,
                         items: _promoTypes
                             .map((t) => DropdownMenuItem(
                                   value: t.key,

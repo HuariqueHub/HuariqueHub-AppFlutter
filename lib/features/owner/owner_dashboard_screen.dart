@@ -190,7 +190,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: kBrownDark,
                         side: BorderSide(
-                            color: kBrownMedium.withOpacity(0.4)),
+                            color: kBrownMedium.withValues(alpha: 0.4)),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),
                       ),
@@ -287,7 +287,7 @@ class _StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.12),
+          color: Colors.white.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(

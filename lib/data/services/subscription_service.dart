@@ -42,4 +42,10 @@ class SubscriptionService {
   Future<void> cancel(int subscriptionId) async {
     await _dio.post('/subscriptions/$subscriptionId/cancel');
   }
+
+  /// Comprobante de pago de una suscripción (US25).
+  Future<Map<String, dynamic>> getReceipt(int subscriptionId) async {
+    final response = await _dio.get('/subscriptions/$subscriptionId/receipt');
+    return response.data as Map<String, dynamic>;
+  }
 }

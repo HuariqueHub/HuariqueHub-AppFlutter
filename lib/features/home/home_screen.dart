@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/models/huarique.dart';
 import '../../data/services/huarique_service.dart';
+import '../../data/services/favorite_service.dart';
 import '../../providers/auth_provider.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -15,11 +16,16 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _service = HuariqueService();
+  final _favoriteService = FavoriteService();
   final _searchCtrl = TextEditingController();
 
   String _selectedCategory = 'Todos';
   List<Huarique> _huariques = [];
   List<Huarique> _filtered = [];
+  Set<int> _favoriteIds = {};
+  List<Huarique> _suggestions = [];
+  bool _nearbyOnly = false;
+  bool _favoritesOnly = false;
   bool _loading = true;
   String? _error;
 
@@ -46,8 +52,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _load() async {
     setState(() { _loading = true; _error = null; });
     try {
-      _huariques = await _service.getAll();
+      _huariques = await _service.getAll(near: _nearbyOnly);
       _applyFilter();
+      await _loadFavorites();
+      await _loadSuggestions();
     } catch (e) {
       setState(() => _error = 'Error al cargar los datos. Verifica tu conexión.');
     } finally {
@@ -55,18 +63,76 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _loadFavorites() async {
+    final userId = context.read<AuthProvider>().user?.id;
+    if (userId == null) return;
+    try {
+      final ids = await _favoriteService.getFavoriteIds(userId);
+      if (mounted) setState(() => _favoriteIds = ids);
+    } catch (_) {
+      // Sin favoritos disponibles: no es un error bloqueante.
+    }
+  }
+
+  Future<void> _loadSuggestions() async {
+    final userId = context.read<AuthProvider>().user?.id;
+    if (userId == null) return;
+    try {
+      final list = await _service.getSuggestions(userId);
+      if (mounted) setState(() => _suggestions = list);
+    } catch (_) {
+      // Sin sugerencias: no es un error bloqueante.
+    }
+  }
+
+  /// Marca/desmarca un favorito (US03) con actualización optimista y reversión.
+  Future<void> _toggleFavorite(int huariqueId) async {
+    final userId = context.read<AuthProvider>().user?.id;
+    if (userId == null) return;
+    final wasFavorite = _favoriteIds.contains(huariqueId);
+    setState(() {
+      if (wasFavorite) {
+        _favoriteIds.remove(huariqueId);
+      } else {
+        _favoriteIds.add(huariqueId);
+      }
+      _applyFilter();
+    });
+    try {
+      if (wasFavorite) {
+        await _favoriteService.remove(userId, huariqueId);
+      } else {
+        await _favoriteService.add(userId, huariqueId);
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        if (wasFavorite) {
+          _favoriteIds.add(huariqueId);
+        } else {
+          _favoriteIds.remove(huariqueId);
+        }
+        _applyFilter();
+      });
+    }
+  }
+
+  Future<void> _toggleNearby() async {
+    setState(() => _nearbyOnly = !_nearbyOnly);
+    await _load();
+  }
+
   void _applyFilter() {
     final q = _searchCtrl.text.toLowerCase();
-    setState(() {
-      _filtered = _huariques.where((h) {
-        final matchCat =
-            _selectedCategory == 'Todos' || h.category == _selectedCategory;
-        final matchSearch = q.isEmpty ||
-            h.name.toLowerCase().contains(q) ||
-            h.district.toLowerCase().contains(q);
-        return matchCat && matchSearch;
-      }).toList();
-    });
+    _filtered = _huariques.where((h) {
+      final matchCat =
+          _selectedCategory == 'Todos' || h.category == _selectedCategory;
+      final matchSearch = q.isEmpty ||
+          h.name.toLowerCase().contains(q) ||
+          h.district.toLowerCase().contains(q);
+      final matchFav = !_favoritesOnly || _favoriteIds.contains(h.id);
+      return matchCat && matchSearch && matchFav;
+    }).toList();
   }
 
   @override
@@ -122,8 +188,26 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         IconButton(
+                          icon: const Icon(Icons.map_outlined,
+                              color: Colors.white),
+                          tooltip: 'Ver en mapa',
+                          onPressed: () => context.push('/map'),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.notifications_outlined,
+                              color: Colors.white),
+                          tooltip: 'Notificaciones',
+                          onPressed: () => context.push('/notifications'),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.tune, color: Colors.white),
+                          tooltip: 'Preferencias',
+                          onPressed: () => context.push('/preferences'),
+                        ),
+                        IconButton(
                           icon: const Icon(Icons.person_outline,
                               color: Colors.white),
+                          tooltip: 'Cerrar sesión',
                           onPressed: () {
                             context.read<AuthProvider>().logout();
                           },
@@ -141,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: TextField(
                   controller: _searchCtrl,
-                  onChanged: (_) => _applyFilter(),
+                  onChanged: (_) => setState(_applyFilter),
                   decoration: InputDecoration(
                     hintText: 'Buscar huarique...',
                     prefixIcon: const Icon(Icons.search, color: kTextTertiary),
@@ -167,14 +251,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 itemCount: _categories.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
                 itemBuilder: (_, i) {
                   final cat = _categories[i];
                   final selected = _selectedCategory == cat;
                   return GestureDetector(
                     onTap: () {
-                      setState(() => _selectedCategory = cat);
-                      _applyFilter();
+                      setState(() {
+                        _selectedCategory = cat;
+                        _applyFilter();
+                      });
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
@@ -200,6 +286,129 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   );
                 },
+              ),
+            ),
+          ),
+
+          // Sugeridos para ti (US18)
+          if (_suggestions.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: Text(
+                      'Sugeridos para ti ✨',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: kBrownDark,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 96,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: _suggestions.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 10),
+                      itemBuilder: (_, i) {
+                        final s = _suggestions[i];
+                        return GestureDetector(
+                          onTap: () => context.push('/huarique/${s.id}'),
+                          child: Container(
+                            width: 180,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: kSurfaceColor,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: kDividerWarm),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  s.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: kBrownDark,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${s.category} · ${s.district}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontSize: 12, color: kTextSecondary),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.star,
+                                        size: 13, color: kStarYellow),
+                                    const SizedBox(width: 3),
+                                    Text(s.rating.toStringAsFixed(1),
+                                        style: const TextStyle(
+                                            fontSize: 12, color: kBrownDark)),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // Filtros rápidos: Cerca de mí (US19) y Favoritos (US03)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+              child: Row(
+                children: [
+                  FilterChip(
+                    label: const Text('Cerca de mí'),
+                    avatar: Icon(
+                      Icons.near_me,
+                      size: 18,
+                      color: _nearbyOnly ? Colors.white : kOrangePrimary,
+                    ),
+                    selected: _nearbyOnly,
+                    onSelected: (_) => _toggleNearby(),
+                    selectedColor: kOrangePrimary,
+                    labelStyle: TextStyle(
+                      color: _nearbyOnly ? Colors.white : kTextSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    showCheckmark: false,
+                  ),
+                  const SizedBox(width: 8),
+                  FilterChip(
+                    label: const Text('Favoritos'),
+                    avatar: Icon(
+                      _favoritesOnly ? Icons.favorite : Icons.favorite_border,
+                      size: 18,
+                      color: _favoritesOnly ? Colors.white : kOrangePrimary,
+                    ),
+                    selected: _favoritesOnly,
+                    onSelected: (v) =>
+                        setState(() { _favoritesOnly = v; _applyFilter(); }),
+                    selectedColor: kOrangePrimary,
+                    labelStyle: TextStyle(
+                      color: _favoritesOnly ? Colors.white : kTextSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    showCheckmark: false,
+                  ),
+                ],
               ),
             ),
           ),
@@ -248,6 +457,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.only(bottom: 12),
                     child: _HuariqueCard(
                       huarique: _filtered[i],
+                      isFavorite: _favoriteIds.contains(_filtered[i].id),
+                      onToggleFavorite: () => _toggleFavorite(_filtered[i].id),
                       onTap: () =>
                           context.push('/huarique/${_filtered[i].id}'),
                     ),
@@ -264,11 +475,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _HuariqueCard extends StatelessWidget {
   final Huarique huarique;
+  final bool isFavorite;
+  final VoidCallback onToggleFavorite;
   final VoidCallback onTap;
-  const _HuariqueCard({required this.huarique, required this.onTap});
+  const _HuariqueCard({
+    required this.huarique,
+    required this.isFavorite,
+    required this.onToggleFavorite,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final status = huarique.openStatus;
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -304,6 +523,26 @@ class _HuariqueCard extends StatelessWidget {
                             ),
                           ),
                         ),
+                        if (status != OpenStatus.unknown)
+                          Container(
+                            margin: const EdgeInsets.only(right: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: status == OpenStatus.open
+                                  ? Colors.green.shade600
+                                  : kTextTertiary,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              status == OpenStatus.open ? 'Abierto' : 'Cerrado',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         if (huarique.hasPromo)
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -365,8 +604,18 @@ class _HuariqueCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 4),
-              const Icon(Icons.arrow_forward_ios,
-                  size: 14, color: kTextTertiary),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                icon: Icon(
+                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                  size: 22,
+                  color: isFavorite ? Colors.red : kTextTertiary,
+                ),
+                tooltip: isFavorite
+                    ? 'Quitar de favoritos'
+                    : 'Agregar a favoritos',
+                onPressed: onToggleFavorite,
+              ),
             ],
           ),
         ),
