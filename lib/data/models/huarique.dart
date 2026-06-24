@@ -48,6 +48,7 @@ class Huarique {
   final double price;
   final String? description;
   final String? address;
+  final String? phone;
   final String? imageUrl;
   final double? latitude;
   final double? longitude;
@@ -68,6 +69,7 @@ class Huarique {
     required this.price,
     this.description,
     this.address,
+    this.phone,
     this.imageUrl,
     this.latitude,
     this.longitude,
@@ -94,6 +96,7 @@ class Huarique {
         price: (json['price'] as num?)?.toDouble() ?? 0.0,
         description: json['description'] as String?,
         address: json['address'] as String?,
+        phone: json['phone'] as String?,
         imageUrl: json['imageUrl'] as String?,
         latitude: (json['latitude'] as num?)?.toDouble(),
         longitude: (json['longitude'] as num?)?.toDouble(),

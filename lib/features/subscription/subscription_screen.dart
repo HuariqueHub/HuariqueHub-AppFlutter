@@ -50,29 +50,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   }
 
   Future<void> _subscribe(Plan plan) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Confirmar suscripción'),
-        content: Text(
-          plan.price == 0
-              ? '¿Cambiar al plan ${plan.name} (gratis)?'
-              : '¿Suscribirte al plan ${plan.name} por S/ ${plan.price.toStringAsFixed(0)}/mes?',
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar',
-                  style: TextStyle(color: kTextSecondary))),
-          TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Confirmar',
-                  style: TextStyle(
-                      color: kOrangePrimary,
-                      fontWeight: FontWeight.bold))),
-        ],
-      ),
-    );
+    final confirmed = plan.price == 0
+        ? await _confirmFreePlan(plan)
+        : await _showPaymentDialog(plan);
     if (confirmed != true) return;
 
     final auth = context.read<AuthProvider>();
@@ -89,6 +69,98 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     } finally {
       setState(() => _subscribing = false);
     }
+  }
+
+  Future<bool?> _confirmFreePlan(Plan plan) => showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Confirmar suscripción'),
+          content: Text('¿Cambiar al plan ${plan.name} (gratis)?'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancelar',
+                    style: TextStyle(color: kTextSecondary))),
+            TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Confirmar',
+                    style: TextStyle(
+                        color: kOrangePrimary, fontWeight: FontWeight.bold))),
+          ],
+        ),
+      );
+
+  /// Formulario de pago simulado con tarjeta (US24).
+  Future<bool?> _showPaymentDialog(Plan plan) {
+    final numberCtrl = TextEditingController();
+    final expiryCtrl = TextEditingController();
+    final cvvCtrl = TextEditingController();
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (ctx, setLocal) {
+          final digits = numberCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
+          final valid = digits.length == 16 &&
+              RegExp(r'^\d{2}/\d{2}$').hasMatch(expiryCtrl.text) &&
+              cvvCtrl.text.length >= 3;
+          return AlertDialog(
+            title: const Text('Pago de membresía'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Plan ${plan.name} — S/ ${plan.price.toStringAsFixed(0)}/mes',
+                    style: const TextStyle(color: kTextSecondary, fontSize: 13)),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: numberCtrl,
+                  keyboardType: TextInputType.number,
+                  onChanged: (_) => setLocal(() {}),
+                  decoration: const InputDecoration(
+                      labelText: 'Número de tarjeta',
+                      border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: expiryCtrl,
+                        onChanged: (_) => setLocal(() {}),
+                        decoration: const InputDecoration(
+                            labelText: 'MM/AA', border: OutlineInputBorder()),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: cvvCtrl,
+                        keyboardType: TextInputType.number,
+                        onChanged: (_) => setLocal(() {}),
+                        decoration: const InputDecoration(
+                            labelText: 'CVV', border: OutlineInputBorder()),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Text('Pago simulado para fines de demostración.',
+                    style: TextStyle(color: kTextSecondary, fontSize: 11)),
+              ],
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(dialogCtx, false),
+                  child: const Text('Cancelar',
+                      style: TextStyle(color: kTextSecondary))),
+              ElevatedButton(
+                onPressed: valid ? () => Navigator.pop(dialogCtx, true) : null,
+                child: Text('Pagar S/ ${plan.price.toStringAsFixed(0)}'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 
   Future<void> _cancel() async {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/huarique_image.dart';
 import '../../data/models/huarique.dart';
 import '../../data/services/huarique_service.dart';
 import '../../data/services/favorite_service.dart';
@@ -496,15 +497,12 @@ class _HuariqueCard extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           child: Row(
             children: [
-              Container(
+              HuariqueImage(
+                url: huarique.imageUrl,
                 width: 56,
                 height: 56,
-                decoration: BoxDecoration(
-                  color: kOrangeLight,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                alignment: Alignment.center,
-                child: const Text('🍽️', style: TextStyle(fontSize: 26)),
+                radius: 12,
+                emojiSize: 26,
               ),
               const SizedBox(width: 12),
               Expanded(

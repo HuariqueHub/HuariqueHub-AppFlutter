@@ -31,4 +31,10 @@ class PromoService {
   Future<void> delete(int id) async {
     await _dio.delete('/promos/$id');
   }
+
+  /// Canjea (usa) una promoción incrementando su contador (US26 lado cliente).
+  Future<Promo> use(int id) async {
+    final response = await _dio.post('/promos/$id/use');
+    return Promo.fromJson(response.data as Map<String, dynamic>);
+  }
 }

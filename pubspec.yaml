@@ -54,6 +54,9 @@ dependencies:
   flutter_map: ^8.1.1
   latlong2: ^0.9.1
 
+  # Compartir contenido (botón "Compartir" del detalle)
+  share_plus: ^10.1.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
