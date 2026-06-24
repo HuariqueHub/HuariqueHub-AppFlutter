@@ -18,6 +18,7 @@ class AppRouter {
   static GoRouter router(AuthProvider auth) => GoRouter(
         initialLocation: '/login',
         refreshListenable: auth,
+        // Controls navigation based on the current authentication state.
         redirect: (context, state) {
           final loggedIn = auth.isLoggedIn;
           final loc = state.matchedLocation;
