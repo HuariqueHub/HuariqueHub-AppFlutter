@@ -3,6 +3,7 @@ import '../data/models/user.dart';
 import '../data/services/auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
+
   final AuthService _service = AuthService();
 
   AppUser? _user;
@@ -16,6 +17,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isOwner => _user?.role == UserRole.owner;
 
   Future<void> tryAutoLogin() async {
+
     final session = await _service.getSavedSession();
     if (session == null) return;
     _user = AppUser(
@@ -28,6 +30,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> login(String email, String password) async {
+
     _loading = true;
     _error = null;
     notifyListeners();
@@ -45,6 +48,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> register({
+
     required String name,
     required String email,
     required String password,
@@ -72,23 +76,27 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+
     await _service.logout();
     _user = null;
     notifyListeners();
   }
 
   void clearError() {
+
     _error = null;
     notifyListeners();
   }
 
   UserRole _roleFromString(String s) => switch (s) {
+
         'owner' => UserRole.owner,
         'admin' => UserRole.admin,
         _ => UserRole.consumer,
       };
 
   String _extractMessage(Exception e) {
+
     final str = e.toString();
     if (str.contains('401')) return 'Correo o contraseña incorrectos.';
     if (str.contains('409')) return 'El correo ya está registrado.';
