@@ -5,6 +5,7 @@ import 'core/theme/app_theme.dart';
 import 'providers/auth_provider.dart';
 
 void main() async {
+
   WidgetsFlutterBinding.ensureInitialized();
   final auth = AuthProvider();
   await auth.tryAutoLogin();
@@ -17,6 +18,7 @@ void main() async {
 }
 
 class HuariqueHubApp extends StatefulWidget {
+
   final AuthProvider auth;
   const HuariqueHubApp({super.key, required this.auth});
 
@@ -25,10 +27,12 @@ class HuariqueHubApp extends StatefulWidget {
 }
 
 class _HuariqueHubAppState extends State<HuariqueHubApp> {
+
   late final _router = AppRouter.router(widget.auth);
 
   @override
   Widget build(BuildContext context) {
+
     return MaterialApp.router(
       title: 'HuariqueHub',
       theme: appTheme,
