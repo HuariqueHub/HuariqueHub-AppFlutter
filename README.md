@@ -31,4 +31,4 @@ Para ejecutar el proyecto localmente, se deben seguir los siguientes pasos:
 3. Ejecutar el comando `flutter pub get` para instalar las dependencias.
 4. Seleccionar un dispositivo disponible, como Windows Desktop o un emulador Android.
 5. Ejecutar la aplicación con el botón `Run` o con el comando `flutter run`.
-
+En Windows, es recomendable tener activado el modo desarrollador para evitar problemas con los plugins de Flutter.
