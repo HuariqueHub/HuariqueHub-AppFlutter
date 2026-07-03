@@ -3,9 +3,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import '../../core/network/api_client.dart';
 
+/// Maneja la autenticación y la persistencia de la sesión del usuario.
+///
+/// Se encarga del login/registro contra el backend, del almacenamiento del
+/// token JWT y de los datos básicos de sesión en [SharedPreferences].
 class AuthService {
   final Dio _dio = ApiClient.instance;
 
+  /// Inicia sesión con [email] y [password].
+  ///
+  /// Si la respuesta incluye un token, lo persiste para autenticar las
+  /// siguientes peticiones. Devuelve el [AppUser] autenticado.
   Future<AppUser> login(String email, String password) async {
     // POST /auth/login → returns { id, name, email, role, token }
     final response = await _dio.post('/auth/login', data: {
@@ -20,6 +28,10 @@ class AuthService {
     return AppUser.fromJson(data);
   }
 
+  /// Registra un nuevo usuario y lo deja autenticado.
+  ///
+  /// Como `POST /users` no devuelve token, tras crear la cuenta se hace login
+  /// automático para obtener y persistir el JWT.
   Future<AppUser> register({
     required String name,
     required String email,
@@ -51,12 +63,14 @@ class AuthService {
     return (response.data as Map<String, dynamic>)['message'] as String? ?? '';
   }
 
+  /// Obtiene la lista de usuarios registrados.
   Future<List<AppUser>> getUsers() async {
     final response = await _dio.get('/users');
     final list = response.data as List<dynamic>;
     return list.map((e) => AppUser.fromJson(e as Map<String, dynamic>)).toList();
   }
 
+  /// Cierra la sesión eliminando el token y los datos de usuario guardados.
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
@@ -65,6 +79,7 @@ class AuthService {
     await prefs.remove('user_name');
   }
 
+  /// Persiste los datos básicos de la sesión ([id], rol y nombre) del [user].
   Future<void> saveSession(AppUser user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('user_id', user.id);
@@ -72,6 +87,7 @@ class AuthService {
     await prefs.setString('user_name', user.name);
   }
 
+  /// Recupera la sesión guardada, o `null` si no hay ninguna almacenada.
   Future<Map<String, dynamic>?> getSavedSession() async {
     final prefs = await SharedPreferences.getInstance();
     final id = prefs.getInt('user_id');
