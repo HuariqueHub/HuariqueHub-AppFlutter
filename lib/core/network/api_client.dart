@@ -1,7 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Punto de acceso único al cliente HTTP [Dio] de la aplicación.
+///
+/// Expone una instancia [Dio] preconfigurada (URL base, timeouts y cabeceras)
+/// que comparten todos los servicios, evitando recrear el cliente en cada uno.
 class ApiClient {
+  /// URL base del backend desplegado de HuariqueHub.
   static const String _baseUrl =
       'https://huariquehub-backend.up.railway.app';
 
@@ -13,9 +18,11 @@ class ApiClient {
   ))
     ..interceptors.add(_AuthInterceptor());
 
+  /// Instancia compartida de [Dio] ya configurada para consumir la API.
   static Dio get instance => _dio;
 }
 
+/// Interceptor que adjunta el token JWT a cada petición saliente.
 class _AuthInterceptor extends Interceptor {
   @override
   void onRequest(
