@@ -29,13 +29,8 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = context.read<AuthProvider>();
     final ok = await auth.login(_emailCtrl.text.trim(), _passCtrl.text);
     if (!mounted) return;
-    if (ok) {
-      if (auth.isOwner) {
-        context.go('/owner-dashboard');
-      } else {
-        context.go('/home');
-      }
-    }
+    // App exploradora: todos los usuarios entran al descubrimiento de huariques.
+    if (ok) context.go('/home');
   }
 
   @override
