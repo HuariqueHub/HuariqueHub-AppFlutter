@@ -8,10 +8,6 @@ import '../../features/home/huarique_detail_screen.dart';
 import '../../features/home/map_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/preferences/preferences_screen.dart';
-import '../../features/owner/owner_dashboard_screen.dart';
-import '../../features/owner/create_edit_huarique_screen.dart';
-import '../../features/owner/owner_promos_screen.dart';
-import '../../features/owner/create_edit_promo_screen.dart';
 import '../../features/subscription/subscription_screen.dart';
 
 class AppRouter {
@@ -27,8 +23,9 @@ class AppRouter {
               loc == '/forgot-password';
           if (!loggedIn && !onAuth) return '/login';
           // No redirigir desde recuperar contraseña aunque haya sesión nula.
+          // App exploradora: cualquier sesión válida va al descubrimiento.
           if (loggedIn && (loc == '/login' || loc == '/register')) {
-            return auth.isOwner ? '/owner-dashboard' : '/home';
+            return '/home';
           }
           return null;
         },
@@ -66,36 +63,6 @@ class AppRouter {
             builder: (_, state) {
               final id = int.parse(state.pathParameters['id']!);
               return HuariqueDetailScreen(huariqueId: id);
-            },
-          ),
-          GoRoute(
-            path: '/owner-dashboard',
-            builder: (_, _) => const OwnerDashboardScreen(),
-          ),
-          GoRoute(
-            path: '/owner/huarique/new',
-            builder: (_, _) => const CreateEditHuariqueScreen(),
-          ),
-          GoRoute(
-            path: '/owner/huarique/:id/edit',
-            builder: (_, state) {
-              final id = int.parse(state.pathParameters['id']!);
-              return CreateEditHuariqueScreen(huariqueId: id);
-            },
-          ),
-          GoRoute(
-            path: '/owner/promos',
-            builder: (_, _) => const OwnerPromosScreen(),
-          ),
-          GoRoute(
-            path: '/owner/promos/new',
-            builder: (_, _) => const CreateEditPromoScreen(),
-          ),
-          GoRoute(
-            path: '/owner/promos/:id/edit',
-            builder: (_, state) {
-              final id = int.parse(state.pathParameters['id']!);
-              return CreateEditPromoScreen(promoId: id);
             },
           ),
           GoRoute(

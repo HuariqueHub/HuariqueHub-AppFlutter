@@ -17,7 +17,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   bool _obscure = true;
-  String _selectedRole = 'consumer';
 
   @override
   void dispose() {
@@ -30,20 +29,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     final auth = context.read<AuthProvider>();
+    // App exploradora: el registro crea siempre una cuenta de explorador.
     final ok = await auth.register(
       name: _nameCtrl.text.trim(),
       email: _emailCtrl.text.trim(),
       password: _passCtrl.text,
-      role: _selectedRole,
+      role: 'consumer',
     );
     if (!mounted) return;
-    if (ok) {
-      if (auth.isOwner) {
-        context.go('/owner-dashboard');
-      } else {
-        context.go('/home');
-      }
-    }
+    if (ok) context.go('/home');
   }
 
   @override
@@ -109,36 +103,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ? 'Mínimo 6 caracteres'
                           : null,
                 ),
-                const SizedBox(height: 20),
-                // Role selector
-                const Text(
-                  'Tipo de cuenta',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: kTextSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _RoleChip(
-                      label: '🍽️  Comensal',
-                      value: 'consumer',
-                      selected: _selectedRole == 'consumer',
-                      onTap: () =>
-                          setState(() => _selectedRole = 'consumer'),
-                    ),
-                    const SizedBox(width: 12),
-                    _RoleChip(
-                      label: '🏪  Propietario',
-                      value: 'owner',
-                      selected: _selectedRole == 'owner',
-                      onTap: () =>
-                          setState(() => _selectedRole = 'owner'),
-                    ),
-                  ],
-                ),
                 const SizedBox(height: 24),
                 // Error
                 if (auth.error != null) ...[
@@ -169,51 +133,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       : const Text('Crear cuenta'),
                 ),
               ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RoleChip extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool selected;
-  final VoidCallback onTap;
-  const _RoleChip({
-    required this.label,
-    required this.value,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding:
-              const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-          decoration: BoxDecoration(
-            color: selected ? kOrangeLight : kSurfaceColor,
-            border: Border.all(
-              color: selected ? kOrangePrimary : kDividerWarm,
-              width: selected ? 2 : 1,
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: selected ? kOrangePrimary : kTextSecondary,
-              fontWeight:
-                  selected ? FontWeight.w600 : FontWeight.normal,
-              fontSize: 14,
             ),
           ),
         ),
