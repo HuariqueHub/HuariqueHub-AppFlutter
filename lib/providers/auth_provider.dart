@@ -28,6 +28,67 @@ class AuthProvider extends ChangeNotifier {
     );
     notifyListeners();
   }
+  /// Actualiza el nombre del perfil y refresca la sesión local.
+  Future<bool> updateName(String name) async {
+    if (_user == null) return false;
+    _loading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final updated = await _service.updateProfile(_user!.id, name);
+      // El backend no manda email en el PATCH; conservamos el actual.
+      _user = AppUser(
+        id: updated.id,
+        name: updated.name,
+        email: _user!.email,
+        role: _user!.role,
+      );
+      await _service.saveSession(_user!);
+      return true;
+    } on Exception catch (e) {
+      _error = _extractMessage(e);
+      return false;
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Cambia la contraseña usando el correo de la sesión actual.
+  Future<bool> changePassword(String newPassword) async {
+    if (_user == null || _user!.email.isEmpty) {
+      _error = 'No se pudo obtener el correo de la sesión.';
+      notifyListeners();
+      return false;
+    }
+    _loading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await _service.resetPassword(_user!.email, newPassword);
+      return true;
+    } on Exception catch (e) {
+      _error = _extractMessage(e);
+      return false;
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Elimina la cuenta y cierra sesión.
+  Future<bool> deleteAccount() async {
+    if (_user == null) return false;
+    try {
+      await _service.deleteAccount(_user!.id);
+      await logout();
+      return true;
+    } on Exception catch (e) {
+      _error = _extractMessage(e);
+      notifyListeners();
+      return false;
+    }
+  }
 
   Future<bool> login(String email, String password) async {
 

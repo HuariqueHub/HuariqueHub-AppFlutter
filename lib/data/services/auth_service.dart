@@ -71,6 +71,16 @@ class AuthService {
     await prefs.setString('user_role', user.role.name);
     await prefs.setString('user_name', user.name);
   }
+  /// Actualiza el nombre del perfil (PATCH /auth/users/{id}).
+  Future<AppUser> updateProfile(int id, String name) async {
+    final response = await _dio.patch('/auth/users/$id', data: {'name': name});
+    return AppUser.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// Elimina la cuenta del usuario (DELETE /auth/users/{id}).
+  Future<void> deleteAccount(int id) async {
+    await _dio.delete('/auth/users/$id');
+  }
 
   Future<Map<String, dynamic>?> getSavedSession() async {
     final prefs = await SharedPreferences.getInstance();
@@ -81,5 +91,6 @@ class AuthService {
       'role': prefs.getString('user_role') ?? 'consumer',
       'name': prefs.getString('user_name') ?? '',
     };
+
   }
 }

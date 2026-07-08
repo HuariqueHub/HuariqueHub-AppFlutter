@@ -9,6 +9,7 @@ class HuariqueImage extends StatelessWidget {
   final double height;
   final double radius;
   final double emojiSize;
+  final BoxFit fit;
 
   const HuariqueImage({
     super.key,
@@ -17,6 +18,7 @@ class HuariqueImage extends StatelessWidget {
     required this.height,
     this.radius = 12,
     this.emojiSize = 26,
+    this.fit = BoxFit.cover,
   });
 
   @override
@@ -43,7 +45,7 @@ class HuariqueImage extends StatelessWidget {
         url!,
         width: width,
         height: height,
-        fit: BoxFit.cover,
+          fit: fit,
         errorBuilder: (_, _, _) => placeholder,
         loadingBuilder: (context, child, progress) =>
             progress == null ? child : placeholder,

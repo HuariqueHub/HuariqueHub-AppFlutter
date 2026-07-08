@@ -144,102 +144,100 @@ class _HomeScreenState extends State<HomeScreen> {
       body: CustomScrollView(
         slivers: [
           // App Bar
-          SliverAppBar(
-            pinned: true,
-            backgroundColor: kBrownDark,
-            expandedHeight: 120,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [kBrownDark, kBrownMedium],
-                  ),
+          // Header fijo (logo + saludo + acciones)
+          SliverToBoxAdapter(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [kBrownDark, kBrownMedium],
                 ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.restaurant, color: kOrangePrimary, size: 28),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Text(
-                                'HuariqueHub',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: Row(
+                    children: [
+                      Image.asset(
+                        'assets/images/logo_puntosabor.png',
+                        width: 40,
+                        height: 40,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'PuntoSabor',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
                               ),
-                              Text(
-                                'Hola, ${auth.user?.name.split(' ').first ?? 'visitante'}',
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 13,
-                                ),
+                            ),
+                            Text(
+                              'Hola, ${auth.user?.name.split(' ').first ?? 'visitante'}',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.map_outlined,
-                              color: Colors.white),
-                          tooltip: 'Ver en mapa',
-                          onPressed: () => context.push('/map'),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.notifications_outlined,
-                              color: Colors.white),
-                          tooltip: 'Notificaciones',
-                          onPressed: () => context.push('/notifications'),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.tune, color: Colors.white),
-                          tooltip: 'Preferencias',
-                          onPressed: () => context.push('/preferences'),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.person_outline,
-                              color: Colors.white),
-                          tooltip: 'Cerrar sesión',
-                          onPressed: () {
-                            context.read<AuthProvider>().logout();
-                          },
-                        ),
-                      ],
-                    ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.map_outlined, color: Colors.white),
+                        tooltip: 'Ver en mapa',
+                        onPressed: () => context.push('/map'),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                        tooltip: 'Notificaciones',
+                        onPressed: () => context.push('/notifications'),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.tune, color: Colors.white),
+                        tooltip: 'Preferencias',
+                        onPressed: () => context.push('/preferences'),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.person_outline, color: Colors.white),
+                        tooltip: 'Mi perfil',
+                        onPressed: () => context.push('/profile'),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(60),
-              child: Container(
-                color: kBrownDark,
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: TextField(
-                  controller: _searchCtrl,
-                  onChanged: (_) => setState(_applyFilter),
-                  decoration: InputDecoration(
-                    hintText: 'Buscar huarique...',
-                    prefixIcon: const Icon(Icons.search, color: kTextTertiary),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      borderSide: BorderSide.none,
-                    ),
+          ),
+
+          // Barra de búsqueda con su propio espacio
+          SliverToBoxAdapter(
+            child: Container(
+              color: kBrownDark,
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+              child: TextField(
+                controller: _searchCtrl,
+                onChanged: (_) => setState(_applyFilter),
+                decoration: InputDecoration(
+                  hintText: 'Buscar huarique...',
+                  prefixIcon: const Icon(Icons.search, color: kTextTertiary),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding:
+                  const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                  isDense: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none,
                   ),
-                  style: const TextStyle(color: kTextPrimary),
                 ),
+                style: const TextStyle(color: kTextPrimary),
               ),
             ),
           ),
@@ -274,6 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: selected ? kOrangePrimary : kDividerWarm,
                         ),
                       ),
+                      alignment: Alignment.center,
                       child: Text(
                         cat,
                         style: TextStyle(
@@ -443,31 +442,31 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             )
           else if (_filtered.isEmpty)
-            const SliverFillRemaining(
-              child: Center(
-                child: Text('No se encontraron resultados.',
-                    style: TextStyle(color: kTextSecondary)),
-              ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.all(16),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (_, i) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _HuariqueCard(
-                      huarique: _filtered[i],
-                      isFavorite: _favoriteIds.contains(_filtered[i].id),
-                      onToggleFavorite: () => _toggleFavorite(_filtered[i].id),
-                      onTap: () =>
-                          context.push('/huarique/${_filtered[i].id}'),
+              const SliverFillRemaining(
+                child: Center(
+                  child: Text('No se encontraron resultados.',
+                      style: TextStyle(color: kTextSecondary)),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.all(16),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                        (_, i) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _HuariqueCard(
+                        huarique: _filtered[i],
+                        isFavorite: _favoriteIds.contains(_filtered[i].id),
+                        onToggleFavorite: () => _toggleFavorite(_filtered[i].id),
+                        onTap: () =>
+                            context.push('/huarique/${_filtered[i].id}'),
+                      ),
                     ),
+                    childCount: _filtered.length,
                   ),
-                  childCount: _filtered.length,
                 ),
               ),
-            ),
         ],
       ),
     );

@@ -9,6 +9,9 @@ import '../../features/home/map_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/preferences/preferences_screen.dart';
 import '../../features/subscription/subscription_screen.dart';
+import '../../features/profile/profile_screen.dart';
+import '../../features/profile/edit_profile_screen.dart';
+
 
 class AppRouter {
   static GoRouter router(AuthProvider auth) => GoRouter(
@@ -68,6 +71,14 @@ class AppRouter {
           GoRoute(
             path: '/subscription',
             builder: (_, _) => const SubscriptionScreen(),
+          ),
+          GoRoute(
+            path: '/profile',
+            builder: (_, _) => const ProfileScreen(),
+          ),
+          GoRoute(
+            path: '/edit-profile',
+            builder: (_, _) => const EditProfileScreen(),
           ),
         ],
       );
