@@ -85,37 +85,3 @@ class Huarique {
   /// Estado operativo calculado a partir de openAt/closeAt (US20/US22).
   OpenStatus get openStatus => computeOpenStatus(openAt, closeAt);
 
-  factory Huarique.fromJson(Map<String, dynamic> json) => Huarique(
-        id: json['id'] as int,
-        name: json['name'] as String,
-        category: json['category'] as String? ?? '',
-        categoryId: json['categoryId'] as int? ?? 0,
-        district: json['district'] as String? ?? '',
-        rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
-        reviewCount: json['reviewCount'] as int? ?? 0,
-        price: (json['price'] as num?)?.toDouble() ?? 0.0,
-        description: json['description'] as String?,
-        address: json['address'] as String?,
-        phone: json['phone'] as String?,
-        imageUrl: json['imageUrl'] as String?,
-        latitude: (json['latitude'] as num?)?.toDouble(),
-        longitude: (json['longitude'] as num?)?.toDouble(),
-        ownerId: json['ownerId'] as int? ?? 0,
-        hasPromo: json['hasPromo'] as bool? ?? false,
-        openAt: json['openAt'] as String?,
-        closeAt: json['closeAt'] as String?,
-      );
-
-  Map<String, dynamic> toJson() => {
-        'name': name,
-        'category': category,
-        'categoryId': categoryId,
-        'district': district,
-        'price': price,
-        'description': description,
-        'address': address,
-        'latitude': latitude,
-        'longitude': longitude,
-        'ownerId': ownerId,
-      };
-}
