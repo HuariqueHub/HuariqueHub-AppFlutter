@@ -51,25 +51,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 Center(
                   child: Column(
                     children: [
-                      Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          color: kOrangePrimary,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Icon(Icons.restaurant,
-                            color: Colors.white, size: 40),
+                      Image.asset(
+                        'assets/images/logo_puntosabor.png',
+                        width: 120,
+                        height: 120,
                       ),
                       const SizedBox(height: 16),
-                      const Text(
-                        'HuariqueHub',
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          color: kBrownDark,
-                        ),
-                      ),
                       const SizedBox(height: 4),
                       const Text(
                         'Descubre los mejores huariques',

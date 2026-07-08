@@ -96,7 +96,9 @@ class Huarique {
         description: json['description'] as String?,
         address: json['address'] as String?,
         phone: json['phone'] as String?,
-        imageUrl: json['imageUrl'] as String?,
+        imageUrl: (json['imageUrl'] as String?)?.isNotEmpty == true
+        ? json['imageUrl'] as String
+        : 'https://huariquehub-backend.up.railway.app/huariques/${json['id']}/image',
         latitude: (json['latitude'] as num?)?.toDouble(),
         longitude: (json['longitude'] as num?)?.toDouble(),
         ownerId: json['ownerId'] as int? ?? 0,
