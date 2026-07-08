@@ -54,6 +54,10 @@ class Huarique {
   final double? longitude;
   final int ownerId;
   final bool hasPromo;
+  // Modalidades de servicio expuestas por el backend.
+  final bool deliveryAvailable;
+  final bool takeawayAvailable;
+  final bool dineInAvailable;
   // Horario crudo (HH:mm) para calcular el estado Abierto/Cerrado (US20/US22).
   final String? openAt;
   final String? closeAt;
@@ -75,6 +79,9 @@ class Huarique {
     this.longitude,
     required this.ownerId,
     this.hasPromo = false,
+    this.deliveryAvailable = false,
+    this.takeawayAvailable = false,
+    this.dineInAvailable = true,
     this.openAt,
     this.closeAt,
   });
@@ -84,40 +91,47 @@ class Huarique {
 
   /// Estado operativo calculado a partir de openAt/closeAt (US20/US22).
   OpenStatus get openStatus => computeOpenStatus(openAt, closeAt);
+
   factory Huarique.fromJson(Map<String, dynamic> json) => Huarique(
-        id: json['id'] as int,
-        name: json['name'] as String,
-        category: json['category'] as String? ?? '',
-        categoryId: json['categoryId'] as int? ?? 0,
-        district: json['district'] as String? ?? '',
-        rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
-        reviewCount: json['reviewCount'] as int? ?? 0,
-        price: (json['price'] as num?)?.toDouble() ?? 0.0,
-        description: json['description'] as String?,
-        address: json['address'] as String?,
-        phone: json['phone'] as String?,
-        imageUrl: (json['imageUrl'] as String?)?.isNotEmpty == true
+    id: json['id'] as int,
+    name: json['name'] as String,
+    category: json['category'] as String? ?? '',
+    categoryId: json['categoryId'] as int? ?? 0,
+    district: json['district'] as String? ?? '',
+    rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+    reviewCount: json['reviewCount'] as int? ?? 0,
+    price: (json['price'] as num?)?.toDouble() ?? 0.0,
+    description: json['description'] as String?,
+    address: json['address'] as String?,
+    phone: json['phone'] as String?,
+    imageUrl: (json['imageUrl'] as String?)?.isNotEmpty == true
         ? json['imageUrl'] as String
-        : 'https://huariquehub-backend.up.railway.app/huariques/${json['id']}/image',
-        latitude: (json['latitude'] as num?)?.toDouble(),
-        longitude: (json['longitude'] as num?)?.toDouble(),
-        ownerId: json['ownerId'] as int? ?? 0,
-        hasPromo: json['hasPromo'] as bool? ?? false,
-        openAt: json['openAt'] as String?,
-        closeAt: json['closeAt'] as String?,
-      );
+        : 'https://huariquehub-backend.up.railway.app/huariques/${json['id']}/image'
+        '${json['updatedAt'] != null ? '?v=${(json['updatedAt'] as String).hashCode}' : ''}',
+    latitude: (json['latitude'] as num?)?.toDouble(),
+    longitude: (json['longitude'] as num?)?.toDouble(),
+    ownerId: json['ownerId'] as int? ?? 0,
+    hasPromo: json['hasPromo'] as bool? ?? false,
+    deliveryAvailable: json['deliveryAvailable'] as bool? ?? false,
+    takeawayAvailable: json['takeawayAvailable'] as bool? ?? false,
+    dineInAvailable: json['dineInAvailable'] as bool? ?? true,
+    openAt: json['openAt'] as String?,
+    closeAt: json['closeAt'] as String?,
+  );
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'category': category,
-        'categoryId': categoryId,
-        'district': district,
-        'price': price,
-        'description': description,
-        'address': address,
-        'latitude': latitude,
-        'longitude': longitude,
-        'ownerId': ownerId,
-      };
+    'name': name,
+    'category': category,
+    'categoryId': categoryId,
+    'district': district,
+    'price': price,
+    'description': description,
+    'address': address,
+    'latitude': latitude,
+    'longitude': longitude,
+    'ownerId': ownerId,
+    'deliveryAvailable': deliveryAvailable,
+    'takeawayAvailable': takeawayAvailable,
+    'dineInAvailable': dineInAvailable,
+  };
 }
-

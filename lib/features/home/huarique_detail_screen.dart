@@ -243,7 +243,7 @@ class _HuariqueDetailScreenState extends State<HuariqueDetailScreen> {
     );
 
     final launched =
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No se pudo abrir el mapa')),
@@ -313,395 +313,473 @@ class _HuariqueDetailScreenState extends State<HuariqueDetailScreen> {
       ),
       body: _loading
           ? const Center(
-              child: CircularProgressIndicator(color: kOrangePrimary))
+          child: CircularProgressIndicator(color: kOrangePrimary))
           : _huarique == null
-              ? const Center(child: Text('No se pudo cargar el huarique'))
-              : ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    // Imagen hero (con fallback a emoji)
-                    // Imagen hero (con fallback a emoji)
-                    Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 500),
-                        child: HuariqueImage(
-                          url: _huarique!.imageUrl,
-                          width: double.infinity,
-                          height: 200,
-                          radius: 16,
-                          emojiSize: 64,
-                          fit: BoxFit.contain,
-                        ),
+          ? const Center(child: Text('No se pudo cargar el huarique'))
+          : ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // Imagen hero (centrada, completa, con fallback a emoji)
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: HuariqueImage(
+                url: _huarique!.imageUrl,
+                width: double.infinity,
+                height: 200,
+                radius: 16,
+                emojiSize: 64,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Header card
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      HuariqueImage(
+                        url: _huarique!.imageUrl,
+                        width: 64,
+                        height: 64,
+                        radius: 14,
+                        emojiSize: 32,
                       ),
-                    ),
-
-                    const SizedBox(height: 16),
-                    // Header card
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
+                      const SizedBox(width: 14),
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Text(
+                              _huarique!.name,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: kBrownDark,
+                              ),
+                            ),
+                            Text(
+                              '${_huarique!.category} · ${_huarique!.district}',
+                              style: const TextStyle(
+                                  color: kTextSecondary,
+                                  fontSize: 13),
+                            ),
+                            const SizedBox(height: 4),
                             Row(
                               children: [
-                                HuariqueImage(
-                                  url: _huarique!.imageUrl,
-                                  width: 64,
-                                  height: 64,
-                                  radius: 14,
-                                  emojiSize: 32,
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        _huarique!.name,
-                                        style: const TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          color: kBrownDark,
-                                        ),
-                                      ),
-                                      Text(
-                                        '${_huarique!.category} · ${_huarique!.district}',
-                                        style: const TextStyle(
-                                            color: kTextSecondary,
-                                            fontSize: 13),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Row(
-                                        children: [
-                                          const Icon(Icons.star,
-                                              size: 15, color: kStarYellow),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            _huarique!.rating.toStringAsFixed(1),
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              color: kBrownDark,
-                                            ),
-                                          ),
-                                          Text(
-                                            ' (${_huarique!.reviewCount} reseñas)',
-                                            style: const TextStyle(
-                                                fontSize: 12,
-                                                color: kTextTertiary),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
+                                const Icon(Icons.star,
+                                    size: 15, color: kStarYellow),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _huarique!.rating.toStringAsFixed(1),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: kBrownDark,
                                   ),
                                 ),
+                                Text(
+                                  ' (${_huarique!.reviewCount} reseñas)',
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      color: kTextTertiary),
+                                ),
                               ],
-                            ),
-                            if (_huarique!.openStatus != OpenStatus.unknown) ...[
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 5),
-                                    decoration: BoxDecoration(
-                                      color: _huarique!.openStatus ==
-                                              OpenStatus.open
-                                          ? Colors.green.shade600
-                                          : kTextTertiary,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(Icons.schedule,
-                                            size: 14, color: Colors.white),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          _huarique!.openStatus.label,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  if (_huarique!.openAt != null &&
-                                      _huarique!.closeAt != null) ...[
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      '${_huarique!.openAt} - ${_huarique!.closeAt}',
-                                      style: const TextStyle(
-                                          color: kTextSecondary, fontSize: 12),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ],
-                            if (_huarique!.price > 0) ...[
-                              const SizedBox(height: 12),
-                              const Divider(color: kDividerWarm),
-                              Row(
-                                children: [
-                                  const Icon(Icons.attach_money,
-                                      size: 16, color: kOrangePrimary),
-                                  Text(
-                                    'Precio promedio: S/ ${_huarique!.price.toStringAsFixed(0)}',
-                                    style: const TextStyle(
-                                        color: kOrangePrimary,
-                                        fontWeight: FontWeight.w500),
-                                  ),
-                                ],
-                              ),
-                            ],
-                            if (_huarique!.address != null) ...[
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(Icons.location_on_outlined,
-                                      size: 16, color: kTextSecondary),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      _huarique!.address!,
-                                      style: const TextStyle(
-                                          color: kTextSecondary,
-                                          fontSize: 13),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                            if (_huarique!.description != null) ...[
-                              const SizedBox(height: 12),
-                              Text(
-                                _huarique!.description!,
-                                style: const TextStyle(
-                                    color: kTextSecondary, fontSize: 14),
-                              ),
-                            ],
-                            const SizedBox(height: 14),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                if ((_huarique!.phone ?? '').isNotEmpty)
-                                  _DetailAction(
-                                      icon: Icons.call,
-                                      label: 'Llamar',
-                                      onTap: _call),
-                                if ((_huarique!.phone ?? '').isNotEmpty)
-                                  _DetailAction(
-                                      icon: Icons.chat,
-                                      label: 'WhatsApp',
-                                      onTap: _whatsapp),
-                                if (_mapsDestination() != null)
-                                  _DetailAction(
-                                      icon: Icons.directions,
-                                      label: 'Cómo llegar',
-                                      onTap: _openDirections),
-                                _DetailAction(
-                                    icon: Icons.share,
-                                    label: 'Compartir',
-                                    onTap: _share),
-                              ],
-                            ),
-                            // Reportar información incorrecta (US21)
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton.icon(
-                                onPressed: _showReportDialog,
-                                icon: const Icon(Icons.flag_outlined,
-                                    size: 16, color: kTextSecondary),
-                                label: const Text('Reportar información',
-                                    style: TextStyle(
-                                        fontSize: 12, color: kTextSecondary)),
-                              ),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Promociones del huarique (US26 lado cliente)
-                    if (_promos.isNotEmpty) ...[
-                      const Text(
-                        'Promociones',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: kBrownDark,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ..._promos.map((p) => Card(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 44,
-                                    height: 44,
-                                    decoration: BoxDecoration(
-                                      color: kOrangeLight,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      (p.discount ?? 0) > 0
-                                          ? '-${p.discount}%'
-                                          : '🎁',
-                                      style: const TextStyle(
-                                        color: kOrangePrimary,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(p.title,
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                color: kBrownDark)),
-                                        if (p.note != null &&
-                                            p.note!.isNotEmpty)
-                                          Text(p.note!,
-                                              style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: kTextSecondary)),
-                                      ],
-                                    ),
-                                  ),
-                                  TextButton(
-                                    onPressed: () => _usePromo(p),
-                                    child: const Text('Canjear'),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )),
-                      const SizedBox(height: 16),
                     ],
-
-                    // Write review
-                    const Text(
-                      'Dejar una reseña',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: kBrownDark,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Star selector
-                            Row(
-                              children: List.generate(
-                                5,
-                                (i) => GestureDetector(
-                                  onTap: () =>
-                                      setState(() => _myRating = i + 1),
-                                  child: Icon(
-                                    i < _myRating
-                                        ? Icons.star
-                                        : Icons.star_outline,
-                                    color: kStarYellow,
-                                    size: 28,
-                                  ),
+                  ),
+                  if (_huarique!.openStatus != OpenStatus.unknown) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: _huarique!.openStatus ==
+                                OpenStatus.open
+                                ? Colors.green.shade600
+                                : kTextTertiary,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.schedule,
+                                  size: 14, color: Colors.white),
+                              const SizedBox(width: 4),
+                              Text(
+                                _huarique!.openStatus.label,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 10),
-                            TextField(
-                              controller: _reviewCtrl,
-                              maxLines: 3,
-                              decoration: const InputDecoration(
-                                hintText:
-                                    'Comparte tu experiencia...',
-                                border: OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(10)),
-                                  borderSide:
-                                      BorderSide(color: kDividerWarm),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(10)),
-                                  borderSide:
-                                      BorderSide(color: kDividerWarm),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(10)),
-                                  borderSide:
-                                      BorderSide(color: kOrangePrimary, width: 2),
-                                ),
-                                filled: true,
-                                fillColor: kSurfaceColor,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: _submittingReview
-                                    ? null
-                                    : _submitReview,
-                                child: _submittingReview
-                                    ? const SizedBox(
-                                        height: 18,
-                                        width: 18,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Text('Publicar reseña'),
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
+                        if (_huarique!.openAt != null &&
+                            _huarique!.closeAt != null) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            '${_huarique!.openAt} - ${_huarique!.closeAt}',
+                            style: const TextStyle(
+                                color: kTextSecondary, fontSize: 12),
+                          ),
+                        ],
+                      ],
                     ),
-                    const SizedBox(height: 16),
-
-                    // Reviews list
+                  ],
+                  if (_huarique!.price > 0) ...[
+                    const SizedBox(height: 12),
+                    const Divider(color: kDividerWarm),
+                    Row(
+                      children: [
+                        const Icon(Icons.attach_money,
+                            size: 16, color: kOrangePrimary),
+                        Text(
+                          'Precio promedio: S/ ${_huarique!.price.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                              color: kOrangePrimary,
+                              fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (_huarique!.address != null) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined,
+                            size: 16, color: kTextSecondary),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            _huarique!.address!,
+                            style: const TextStyle(
+                                color: kTextSecondary,
+                                fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (_huarique!.description != null) ...[
+                    const SizedBox(height: 12),
                     Text(
-                      'Reseñas (${_reviews.length})',
+                      _huarique!.description!,
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: kBrownDark,
+                          color: kTextSecondary, fontSize: 14),
+                    ),
+                  ],
+                  // Modalidades de servicio
+                  const SizedBox(height: 12),
+                  const Divider(color: kDividerWarm),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Modalidades de servicio',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: kBrownDark,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _ServiceChip(
+                        icon: Icons.delivery_dining,
+                        label: 'Delivery',
+                        available: _huarique!.deliveryAvailable,
+                      ),
+                      _ServiceChip(
+                        icon: Icons.shopping_bag_outlined,
+                        label: 'Para llevar',
+                        available: _huarique!.takeawayAvailable,
+                      ),
+                      _ServiceChip(
+                        icon: Icons.restaurant,
+                        label: 'Comer en local',
+                        available: _huarique!.dineInAvailable,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if ((_huarique!.phone ?? '').isNotEmpty)
+                        _DetailAction(
+                            icon: Icons.call,
+                            label: 'Llamar',
+                            onTap: _call),
+                      if ((_huarique!.phone ?? '').isNotEmpty)
+                        _DetailAction(
+                            icon: Icons.chat,
+                            label: 'WhatsApp',
+                            onTap: _whatsapp),
+                      if (_mapsDestination() != null)
+                        _DetailAction(
+                            icon: Icons.directions,
+                            label: 'Cómo llegar',
+                            onTap: _openDirections),
+                      _DetailAction(
+                          icon: Icons.share,
+                          label: 'Compartir',
+                          onTap: _share),
+                    ],
+                  ),
+                  // Reportar información incorrecta (US21)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: _showReportDialog,
+                      icon: const Icon(Icons.flag_outlined,
+                          size: 16, color: kTextSecondary),
+                      label: const Text('Reportar información',
+                          style: TextStyle(
+                              fontSize: 12, color: kTextSecondary)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Promociones del huarique (US26 lado cliente)
+          if (_promos.isNotEmpty) ...[
+            const Text(
+              'Promociones',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: kBrownDark,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ..._promos.map((p) => Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: kOrangeLight,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        (p.discount ?? 0) > 0
+                            ? '-${p.discount}%'
+                            : '🎁',
+                        style: const TextStyle(
+                          color: kOrangePrimary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    if (_reviews.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 20),
-                        child: Text(
-                          'Sé el primero en dejar una reseña.',
-                          style: TextStyle(color: kTextTertiary),
-                          textAlign: TextAlign.center,
-                        ),
-                      )
-                    else
-                      ...(_reviews.map((r) => _ReviewTile(review: r))),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                        children: [
+                          Text(p.title,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: kBrownDark)),
+                          if (p.note != null &&
+                              p.note!.isNotEmpty)
+                            Text(p.note!,
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    color: kTextSecondary)),
+                        ],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _usePromo(p),
+                      child: const Text('Canjear'),
+                    ),
                   ],
                 ),
+              ),
+            )),
+            const SizedBox(height: 16),
+          ],
+
+          // Write review
+          const Text(
+            'Dejar una reseña',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: kBrownDark,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Star selector
+                  Row(
+                    children: List.generate(
+                      5,
+                          (i) => GestureDetector(
+                        onTap: () =>
+                            setState(() => _myRating = i + 1),
+                        child: Icon(
+                          i < _myRating
+                              ? Icons.star
+                              : Icons.star_outline,
+                          color: kStarYellow,
+                          size: 28,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _reviewCtrl,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      hintText:
+                      'Comparte tu experiencia...',
+                      border: OutlineInputBorder(
+                        borderRadius:
+                        BorderRadius.all(Radius.circular(10)),
+                        borderSide:
+                        BorderSide(color: kDividerWarm),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius:
+                        BorderRadius.all(Radius.circular(10)),
+                        borderSide:
+                        BorderSide(color: kDividerWarm),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius:
+                        BorderRadius.all(Radius.circular(10)),
+                        borderSide:
+                        BorderSide(color: kOrangePrimary, width: 2),
+                      ),
+                      filled: true,
+                      fillColor: kSurfaceColor,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _submittingReview
+                          ? null
+                          : _submitReview,
+                      child: _submittingReview
+                          ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                          : const Text('Publicar reseña'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Reviews list
+          Text(
+            'Reseñas (${_reviews.length})',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: kBrownDark,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (_reviews.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Text(
+                'Sé el primero en dejar una reseña.',
+                style: TextStyle(color: kTextTertiary),
+                textAlign: TextAlign.center,
+              ),
+            )
+          else
+            ...(_reviews.map((r) => _ReviewTile(review: r))),
+        ],
+      ),
+    );
+  }
+}
+
+class _ServiceChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool available;
+  const _ServiceChip({
+    required this.icon,
+    required this.label,
+    required this.available,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = available ? kOrangePrimary : kTextTertiary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: available ? kOrangeLight : kWarmWhite,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: available ? kOrangePrimary : kDividerWarm,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            available ? icon : Icons.close,
+            size: 15,
+            color: color,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: available ? kBrownDark : kTextTertiary,
+              fontWeight: FontWeight.w500,
+              decoration: available ? null : TextDecoration.lineThrough,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -725,7 +803,7 @@ class _DetailAction extends StatelessWidget {
         side: const BorderSide(color: kOrangePrimary),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -765,7 +843,7 @@ class _ReviewTile extends StatelessWidget {
                 Row(
                   children: List.generate(
                     5,
-                    (i) => Icon(
+                        (i) => Icon(
                       i < review.rating ? Icons.star : Icons.star_outline,
                       size: 14,
                       color: kStarYellow,
