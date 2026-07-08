@@ -143,8 +143,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                const Text('Pago simulado para fines de demostración.',
-                    style: TextStyle(color: kTextSecondary, fontSize: 11)),
+                const Text('Pago simulado para demostrar el flujo de suscripción.',
+    style: TextStyle(color: kTextSecondary, fontSize: 11)),
               ],
             ),
             actions: [
@@ -190,7 +190,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al cancelar')),
+          const SnackBar(content: Text('No se pudo completar la suscripción')),
         );
       }
     }
