@@ -320,13 +320,21 @@ class _HuariqueDetailScreenState extends State<HuariqueDetailScreen> {
                   padding: const EdgeInsets.all(16),
                   children: [
                     // Imagen hero (con fallback a emoji)
-                    HuariqueImage(
-                      url: _huarique!.imageUrl,
-                      width: double.infinity,
-                      height: 180,
-                      radius: 16,
-                      emojiSize: 64,
+                    // Imagen hero (con fallback a emoji)
+                    Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 500),
+                        child: HuariqueImage(
+                          url: _huarique!.imageUrl,
+                          width: double.infinity,
+                          height: 200,
+                          radius: 16,
+                          emojiSize: 64,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
                     ),
+
                     const SizedBox(height: 16),
                     // Header card
                     Card(
