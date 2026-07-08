@@ -102,11 +102,12 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     final id = prefs.getInt('user_id');
     if (id == null) return null;
+
     return {
       'id': id,
       'role': prefs.getString('user_role') ?? 'consumer',
       'name': prefs.getString('user_name') ?? '',
     };
-
   }
 }
+
